@@ -11,3 +11,5 @@ for i in ansible1 ansible2 ; do ssh-copy-id $i ; done
 ansible -i inventory all -u mohamed -b -K -m shell -a 'echo "ansible ALL=(ALL) NOPASSWD:ALL" >/etc/sudoers.d/ansible'
 #execute acommand in remote server 
 ansible -i inventory all -u ansible -b -m command -a "ls -al /root " 
+
+
