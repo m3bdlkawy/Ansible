@@ -1,0 +1,39 @@
+---
+- name: Install and configure httpd
+  hosts: webservers
+  become: yes
+  tasks:
+
+    - name: Install httpd
+      yum:
+        name: httpd
+        state: present
+
+    - name: Ensure httpd is enabled and started
+      systemd:
+        name: httpd
+        enabled: yes
+        state: started
+
+    - name: Check if httpd is running
+      command: systemctl status httpd
+      register: httpd_status
+      changed_when: false
+
+    - name: Print httpd status
+      debug:
+        var: httpd_status
+
+    - name: Wait for the httpd service to be up
+      wait_for:
+        port: 80
+        delay: 5
+
+    - name: Make a curl request to check the httpd service
+      command: curl -s http://localhost
+      register: curl_result
+      changed_when: false
+
+    - name: Print curl result
+      debug:
+        var: curl_result.stdout
