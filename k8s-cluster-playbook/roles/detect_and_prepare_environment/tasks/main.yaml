@@ -41,51 +41,18 @@
         state: present
       when: ansible_distribution == "Fedora"
 
-        #- name: Add Docker repository and install containerd
-        #  block:
-        #    - name: Add Docker GPG key and repository on Ubuntu
-        #apt_key:
-        #url: https://download.docker.com/linux/ubuntu/gpg
-      #state: present
-      # when: ansible_distribution == "Ubuntu"
+- name: Include tasks based on OS family
+  block:
+    - name: Include tasks for Debian-based systems
+      include_tasks: debian.yaml
+      when: ansible_facts['os_family'] == 'Debian'
 
-        #    - name: Add Docker repository on Ubuntu
-        # apt_repository:
-        # repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
-        # state: present
-        #     when: ansible_distribution == "Ubuntu"
+    - name: Include tasks for RedHat-based systems
+      include_tasks: redhat.yaml
+      when: ansible_facts['os_family'] == 'RedHat'
 
-        #    - name: Add Docker GPG key and repository on CentOS
-        #     rpm_key:
-        # key: https://download.docker.com/linux/centos/gpg
-        # when: ansible_distribution == "CentOS"
-
-        #    - name: Add Docker repository on CentOS
-        #      yum_repository:
-        #    name: docker
-        # description: Docker Repository
-        # baseurl: https://download.docker.com/linux/centos/7/x86_64/stable
-        # gpgcheck: yes
-        # gpgkey: https://download.docker.com/linux/centos/gpg
-        # enabled: yes
-        # when: ansible_distribution == "CentOS"
-
-     - name: Include tasks for Debian-based systems
-       include_tasks: debian.ymal
-       when: ansible_facts['os_family'] == 'Debian'
-
-     - name: Include tasks for RedHat-based systems
-       include_tasks: redhat.ymal
-       when: ansible_facts['os_family'] == 'RedHat'
-    - name: Add Docker GPG key and repository on Fedora
-      rpm_key:
-        key: https://download.docker.com/linux/fedora/gpg
-      when: ansible_distribution == "Fedora"
-
-    - name: Add Docker repository on Fedora
-      command: dnf config-manager --add-repo=https://download.docker.com/linux/fedora/docker-ce.repo
-      when: ansible_distribution == "Fedora"
-
+- name: Install containerd
+  block:
     - name: Install containerd on Ubuntu
       apt:
         name: containerd.io={{ containerd_version }}
@@ -110,14 +77,16 @@
         state: present
       when: ansible_distribution == "Fedora"
 
-- name: Configure containerd
-  command: containerd config default | tee /etc/containerd/config.toml
+- name: Configure and restart containerd
+  block:
+    - name: Configure containerd
+      command: containerd config default | tee /etc/containerd/config.toml
 
-- name: Restart containerd
-  service:
-    name: containerd
-    state: restarted
-    enabled: yes
+    - name: Restart containerd
+      service:
+        name: containerd
+        state: restarted
+        enabled: yes
 
 - name: Add Kubernetes GPG key and repository
   block:
@@ -154,9 +123,9 @@
       command: dnf config-manager --add-repo=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
       when: ansible_distribution == "Fedora"
 
-    - name: Install Kubernetes dependencies
-      block:
-     - name: Install Kubernetes on Ubuntu
+- name: Install Kubernetes dependencies
+  block:
+    - name: Install Kubernetes on Ubuntu
       apt:
         name:
           - kubelet={{ kubernetes_version }}
@@ -209,3 +178,7 @@
     state: started
     enabled: yes
 
+- name: Reload sysctl settings
+  sysctl:
+    reload: yes
+  listen: reload sysctl

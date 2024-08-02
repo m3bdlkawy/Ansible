@@ -1,5 +1,6 @@
 # Global Variables
-containerd_version: "latest"
+
+containerd_version: "1.8.12"  
 kubernetes_version: "1.29.0-00"
 pod_network_cidr: "192.168.0.0/16"
 
