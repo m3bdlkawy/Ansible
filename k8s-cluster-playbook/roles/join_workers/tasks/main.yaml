@@ -1,0 +1,12 @@
+---
+- name: Retrieve join command from the first master node
+  fetch:
+    src: /root/join-command.sh
+    dest: /tmp/join-command.sh
+    flat: yes
+  delegate_to: "{{ groups['master'][0] }}"
+
+- name: Join worker node to the cluster
+  command: sh /tmp/join-command.sh
+  when: inventory_hostname in worker_nodes
+

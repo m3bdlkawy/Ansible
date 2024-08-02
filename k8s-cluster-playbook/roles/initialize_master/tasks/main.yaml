@@ -1,0 +1,42 @@
+---
+- name: Initialize the first master node
+  command: kubeadm init --control-plane-endpoint="{{ master_nodes[0] }}:6443" --upload-certs --pod-network-cidr={{ pod_network_cidr }}
+  register: kubeadm_init
+  when: inventory_hostname == master_nodes[0]
+
+- name: Set up kubeconfig for root user
+  block:
+    - name: Create .kube directory
+      file:
+        path: /root/.kube
+        state: directory
+        mode: '0700'
+
+    - name: Copy kubeconfig file
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /root/.kube/config
+        remote_src: yes
+  when: inventory_hostname == master_nodes[0]
+
+- name: Generate join command for other nodes
+  command: kubeadm token create --print-join-command
+  register: join_command
+  when: inventory_hostname == master_nodes[0]
+
+- name: Save join command to a file
+  copy:
+    content: "{{ join_command.stdout }} --control-plane --certificate-key {{ kubeadm_init.stdout | regex_search('.*certificate-key=([a-zA-Z0-9]*)') }}"
+    dest: /root/join-command.sh
+  when: inventory_hostname == master_nodes[0]
+
+- name: Distribute join command to other master nodes
+  copy:
+    src: /root/join-command.sh
+    dest: /root/join-command.sh
+  when: inventory_hostname != master_nodes[0]
+
+- name: Join other master nodes to the cluster
+  command: sh /root/join-command.sh
+  when: inventory_hostname != master_nodes[0]
+

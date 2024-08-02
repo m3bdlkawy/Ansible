@@ -1,0 +1,24 @@
+# Global Variables
+containerd_version: "latest"
+kubernetes_version: "1.29.0-00"
+pod_network_cidr: "192.168.0.0/16"
+
+# Define master and worker nodes
+master_nodes:
+  - "192.168.1.11"
+  - "192.168.1.13"
+
+worker_nodes:
+  - "192.168.1.14"
+  - "192.168.1.15"
+
+# Tokens and CA certificates
+kubeadm_token: "abcdef.0123456789abcdef"
+ca_cert_hash: "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+
+# Ansible User Configuration
+ansible_user_name: "ansible"
+ansible_user_shell: "/bin/bash"
+ansible_user_sudo_privileges:
+  - "/usr/bin/kubeadm"
+  - "/usr/bin/kubectl"

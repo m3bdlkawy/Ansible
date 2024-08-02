@@ -1,0 +1,31 @@
+---
+- name: Ensure Ansible user exists
+  user:
+    name: "{{ ansible_user_name }}"
+    state: present
+    create_home: yes
+    shell: "{{ ansible_user_shell }}"
+
+- name: Add Ansible user to the sudoers with limited privileges
+  lineinfile:
+    path: /etc/sudoers
+    line: "{{ ansible_user_name }} ALL=(ALL) NOPASSWD: {{ ansible_user_sudo_privileges | join(', ') }}"
+    validate: 'visudo -cf %s'
+  become: yes
+
+- name: Ensure Ansible user has correct ownership of the .kube directory
+  file:
+    path: /root/.kube
+    state: directory
+    owner: "{{ ansible_user_name }}"
+    group: "{{ ansible_user_name }}"
+  when: ansible_user_name is defined
+
+- name: Ensure Ansible user has correct ownership of the join command script
+  file:
+    path: /root/join-command.sh
+    state: file
+    owner: "{{ ansible_user_name }}"
+    group: "{{ ansible_user_name }}"
+  when: ansible_user_name is defined
+

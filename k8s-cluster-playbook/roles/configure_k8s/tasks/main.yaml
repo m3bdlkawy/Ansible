@@ -1,0 +1,8 @@
+---
+- name: Deploy a Pod Network
+  command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+  when: inventory_hostname in master_nodes
+
+- name: Ensure Kubernetes components are running
+  command: kubectl get pods --all-namespaces
+

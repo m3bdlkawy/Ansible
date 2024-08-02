@@ -1,0 +1,11 @@
+---
+- name: Check Kubernetes nodes
+  command: kubectl get nodes
+  register: k8s_nodes
+  retries: 10
+  delay: 30
+  until: "'Ready' in k8s_nodes.stdout"
+
+- name: Check Kubernetes system pods
+  command: kubectl get pods --all-namespaces
+

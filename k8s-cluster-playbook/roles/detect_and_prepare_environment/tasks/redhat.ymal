@@ -1,0 +1,16 @@
+---
+- name: Add Docker repository for containerd
+  dnf_repository:
+    name: docker-ce
+    description: Docker CE Repository
+    baseurl: https://download.docker.com/linux/centos/7/x86_64/stable/
+    gpgcheck: yes
+    gpgkey: https://download.docker.com/linux/centos/gpg
+    state: present
+
+- name: Install containerd
+  dnf:
+    name: containerd.io
+    state: latest
+  ignore_errors: yes
+

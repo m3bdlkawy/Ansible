@@ -1,0 +1,22 @@
+---
+- hosts: all
+  become: yes
+  roles:
+    - detect_and_prepare_environment
+
+- hosts: master
+  become: yes
+  roles:
+    - initialize_master
+
+- hosts: worker
+  become: yes
+  roles:
+    - join_workers
+
+- hosts: master
+  become: yes
+  roles:
+    - configure_k8s
+    - verify_cluster
+

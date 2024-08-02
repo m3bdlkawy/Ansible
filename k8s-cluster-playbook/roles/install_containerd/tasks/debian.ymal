@@ -1,0 +1,15 @@
+---
+- name: Add Docker repository for containerd
+  apt_repository:
+    repo: 'deb https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable'
+    state: present
+
+- name: Update package lists
+  apt:
+    update_cache: yes
+
+- name: Install containerd
+  apt:
+    name: containerd.io
+    state: latest
+
