@@ -1,0 +1,69 @@
+---
+- name: Stop kubelet service
+  systemd:
+    name: kubelet
+    state: stopped
+    enabled: false
+
+- name: Remove existing Kubernetes configuration files
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/kubernetes/kubelet.conf
+    - /etc/kubernetes/pki/ca.crt
+
+- name: Ensure necessary directories for containerd exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  with_items:
+    - /var/lib/containerd/io.containerd.content.v1.content/ingest
+    - /var/lib/containerd/io.containerd.content.v1.content/blobs
+    - /var/lib/containerd/io.containerd.metadata.v1.bolt
+    - /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs
+
+- name: Restart containerd service
+  systemd:
+    name: containerd
+    state: restarted
+    enabled: true
+
+- name: Restart kubelet service
+  systemd:
+    name: kubelet
+    state: started
+    enabled: true
+
+- name: Check if port 10250 is in use
+  shell: |
+    lsof -i :10250
+  register: port_check
+  ignore_errors: true
+
+- name: Kill process using port 10250
+  shell: |
+    kill -9 $(lsof -t -i :10250)
+  when: port_check.stdout != ''
+  ignore_errors: true
+
+- name: Read join command from file
+  slurp:
+    src: /home/osboxes/join_command.sh
+  register: join_command_file
+  delegate_to: localhost
+  become: yes
+
+- name: Join worker nodes to the cluster
+  shell: |
+    {{ (join_command_file.content | b64decode).strip() }} --ignore-preflight-errors=cri
+  register: join_result
+  become: yes
+  ignore_errors: yes
+
+- debug:
+    msg: "{{ join_result }}"
+

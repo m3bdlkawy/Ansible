@@ -1,0 +1,73 @@
+---
+- name: Install necessary packages for Kubernetes
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gpg
+    state: present
+  become: yes
+
+- name: Ensure the keyrings directory exists
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  become: yes
+
+- name: Remove existing Kubernetes GPG keyring file if it exists
+  file:
+    path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    state: absent
+  become: yes
+
+- name: Download Kubernetes GPG key
+  apt_key:
+    url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
+    keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    state: present
+  become: yes
+
+#- name: Convert GPG key to keyring
+#  command: gpg --dearmor /tmp/kubernetes-apt-keyring.gpg -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+#  become: yes
+
+#- name: Remove the temporary GPG key file
+ # file:
+ #   path: /tmp/kubernetes-apt-keyring.gpg
+  #  state: absent
+  #become: yes
+
+- name: Add Kubernetes APT repository
+  template:
+    src: kubernetes.list.j2
+    dest: /etc/apt/sources.list.d/kubernetes.list
+  become: yes
+
+- name: Update APT package index
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: Install Kubernetes components
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+  become: yes
+
+- name: Pin Kubernetes components to prevent upgrades
+  command: apt-mark hold kubelet kubeadm kubectl
+  become: yes
+
+- name: Ensure kubelet is enabled and started
+  systemd:
+    name: kubelet
+    state: started
+    enabled: yes
+  become: yes
+

@@ -1,0 +1,40 @@
+
+# roles/initialize_cluster/tasks/main.yaml
+- import_tasks: reset_kubernetes.yaml
+
+- name: Initialize Kubernetes master using kubeadm
+  command: kubeadm init --pod-network-cidr={{ pod_network_cidr }} --apiserver-advertise-address={{ apiserver_advertise_address }} --ignore-preflight-errors=cri
+  register: kubeadm_init
+  #when: kubeadm_init_check.stat.exists == False
+  #become: yes
+
+- name: Extract join command
+  shell: |
+    kubeadm token create --print-join-command
+  register: join_command
+  #when: kubeadm_init_check.stat.exists is not defined or not kubeadm_init_check.stat.exists
+  #become: yes
+
+- name: Ensure .kube directory exists
+  file:
+    path: "$HOME/.kube"
+    state: directory
+    mode: '0755'
+  #become: yes
+
+- name: Set up kubeconfig for the master node
+  shell: |
+    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+    kubectl --kubeconfig=/etc/kubernetes/admin.conf config set-context --current --namespace=default
+  #when: kubeadm_init_check.stat.exists is not defined or not kubeadm_init_check.stat.exists
+  #become: yes
+- name: Save join command to file
+  copy:
+    content: "{{ join_command.stdout }}"
+    dest: /home/osboxes/join_command.sh
+  #when: kubeadm_init_check.stat.exists is not defined or not kubeadm_init_check.stat.exists
+  #become: yes
+
+
+

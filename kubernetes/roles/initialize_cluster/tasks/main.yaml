@@ -1,0 +1,35 @@
+- import_tasks: init_master.yaml
+  when: inventory_hostname in groups['master']
+
+- import_tasks: join_workers.yaml
+  when: inventory_hostname in groups['worker']
+
+- name: Setting up networking and removing taint from kube control
+  block:
+    - name: Check if Calico is already deployed
+      ansible.builtin.shell: |
+        kubectl --kubeconfig=/etc/kubernetes/admin.conf get pods -n kube-system -l k8s-app=calico-node --no-headers
+      register: calico_check
+      ignore_errors: yes
+
+    - name: Delete Calico if it exists
+      ansible.builtin.shell: |
+        kubectl --kubeconfig=/etc/kubernetes/admin.conf delete -f https://docs.projectcalico.org/manifests/calico.yaml
+      when: calico_check.stdout != ""
+      become: yes
+
+    - name: Apply CNI plugin (e.g., Calico)
+      ansible.builtin.shell: |
+       kubectl --kubeconfig=/etc/kubernetes/admin.conf apply -f https://docs.projectcalico.org/manifests/calico.yaml
+      become: yes
+
+    - name: Wait for Calico pods to be running
+      shell: |
+        kubectl wait --for=condition=Ready pod -l k8s-app=calico-node -n calico-system --timeout=300s
+      register: calico_pods
+      ignore_errors: yes
+      retries: 5
+      delay: 30
+
+- import_tasks: verify_cluster.yaml
+

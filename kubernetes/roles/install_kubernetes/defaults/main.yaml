@@ -1,0 +1,4 @@
+---
+# Default values for the role, if any
+kubernetes_version: "1.28"
+

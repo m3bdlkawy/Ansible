@@ -1,0 +1,27 @@
+
+# Global Variables
+containerd_version: "1.8.12"
+kubernetes_version: "1.28.0"
+pod_network_cidr: "10.244.0.0/16"
+network_plugin_manifest: "https://docs.projectcalico.org/manifests/calico.yaml"
+
+# Define master and worker nodes
+master_nodes:
+  #  - "192.168.1.11"
+  #- "192.168.1.10"
+
+worker_nodes:
+  - "192.168.1.11"
+  - "192.168.1.13"
+
+# Tokens and CA certificates (These should be dynamically managed in a real scenario)
+kubeadm_token: "abcdef.0123456789abcdef"
+ca_cert_hash: "sha256:1234567890abcdef1234567890abcdef1234567890abcdef"
+apiserver_advertise_address: "192.168.1.12"
+# Ansible User Configuration
+ansible_user_name: "osboxes"
+ansible_user_shell: "/bin/bash"
+ansible_user_sudo_privileges:
+  - "/usr/bin/kubeadm"
+  - "/usr/bin/kubectl"
+

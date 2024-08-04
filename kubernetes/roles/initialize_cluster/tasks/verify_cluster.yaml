@@ -1,0 +1,9 @@
+---
+- name: Verify cluster nodes
+  command: kubectl get nodes
+  register: kubectl_output
+  become: yes
+
+- debug:
+    var: kubectl_output.stdout_lines
+
