@@ -1,0 +1,48 @@
+---
+# disables selinux 
+- name: Ensure SELinux is in permissive mode
+  ansible.builtin.command: setenforce 0
+  when: ansible_selinux.status == "enabled"
+  become: yes
+
+- name: Update SELinux configuration to permissive
+  ansible.builtin.lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: 'SELINUX=permissive'
+    state: present
+  when: ansible_selinux.status == "enabled"
+  become: yes
+
+# roles/kubernetes_repo/tasks/main.yml
+- name: Ensure Kubernetes repository is configured
+  ansible.builtin.template:
+    src: kubernetes.repo.j2
+    dest: /etc/yum.repos.d/kubernetes.repo
+  become: yes
+# install kuberntes 
+
+- name: Install kubelet, kubeadm, and kubectl
+  ansible.builtin.yum:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    disable_excludes: kubernetes
+  become: yes
+
+- name: Ensure kubelet service is enabled and started
+  ansible.builtin.systemd:
+    name: kubelet
+    enabled: yes
+    state: started
+  become: yes
+- name: Disable swap temporarily
+  command: swapoff -a
+  become: yes
+- name: Ensure swap is disabled permanently
+  lineinfile:
+        path: /etc/fstab
+        regexp: '^/swapfile'
+        state: absent

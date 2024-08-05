@@ -1,0 +1,6 @@
+# vars file for k8s
+kubernetes_url: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key"
+master_ip: "192.168.1.12"
+pod_network_cidr: "10.244.0.0/16"
+calico_version: "v3.28.0"
+ansible_user: "osboxes"

@@ -1,0 +1,24 @@
+---
+# tasks file for cri-o
+# Include tasks for Debian-based distributions
+- include_tasks: debian.yml
+  when: ansible_facts['os_family'] == "Debian"
+
+# Include tasks for RHEL distributions
+- include_tasks: rhel.yml
+  when: ansible_facts['os_family'] in ["RedHat", "Fedora", "CentOS"]
+
+# Initialize Kubernetes cluster
+- include_tasks: reset_kubernetes.yml
+  when: "'master' in group_names"
+
+# Initialize Kubernetes cluster
+- include_tasks: initialized_cluster.yml
+  when: "'master' in group_names"
+
+# Join workers
+- include_tasks: join_workers.yml
+  when: "'worker' in group_names"
+
+
+

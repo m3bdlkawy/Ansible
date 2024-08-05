@@ -1,0 +1,48 @@
+# roles/initialize_cluster/tasks/reset_kubernetes.yaml
+- name: Reset Kubernetes cluster (if already initialized)
+  ansible.builtin.shell: |
+    kubeadm reset -f
+  ignore_errors: yes
+  become: yes
+
+- name: Remove leftover Kubernetes directories and files
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/kubernetes/
+    - /var/lib/kubelet/
+    - /var/lib/dockershim/
+    - /var/lib/containerd/
+    - /var/lib/etcd
+    - $HOME/.kube/config
+  ignore_errors: yes
+  become: yes
+
+- name: Ensure necessary directories for containerd exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  with_items:
+    - /var/lib/containerd/io.containerd.content.v1.content/ingest
+    - /var/lib/containerd/io.containerd.content.v1.content/blobs
+    - /var/lib/containerd/io.containerd.metadata.v1.bolt
+    - /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs
+  become: yes
+
+- name: Restart containerd service
+  systemd:
+    name: containerd
+    state: restarted
+    enabled: true
+  become: yes
+
+- name: Restart kubelet service
+  systemd:
+    name: kubelet
+    state: restarted
+    enabled: true
+  become: yes

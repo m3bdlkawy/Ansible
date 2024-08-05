@@ -5,6 +5,7 @@
   vars_files:
     - roles/containerd/vars/main.yml
     - roles/cri-o/vars/main.yml
+    - roles/k8s/vars/main.yml
   vars_prompt:
     - name: container_runtime
       prompt: "Which container runtime do you want to install? (containerd/cri-o)"
@@ -18,12 +19,18 @@
           - container_runtime in ['containerd', 'cri-o']
         fail_msg: "Invalid container runtime choice. Please choose either 'containerd' or 'cri-o'."
 
-  roles:
-    - role: containerd
+    - name: Install containerd if chosen
+      include_role:
+        name: containerd
       when: container_runtime == "containerd"
 
-    - role: cri-o
+    - name: Install cri-o if chosen
+      include_role:
+        name: cri-o
       when: container_runtime == "cri-o"
 
-    
+    - name: Initialize Kubernetes cluster
+      include_role:
+        name: k8s
+      when: container_runtime in ['containerd', 'cri-o']
 
