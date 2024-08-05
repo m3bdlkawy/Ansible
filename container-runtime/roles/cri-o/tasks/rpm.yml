@@ -1,0 +1,48 @@
+---
+- name: Ensure the repository file for CRI-O is present
+  ansible.builtin.template:
+    src: rpm_repo.yml
+    dest: /etc/yum.repos.d/cri-o.repo
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+- name: Clean yum cache
+  command: yum clean all
+  become: yes
+
+- name: Update repository metadata
+  command: yum makecache
+  become: yes
+
+- name: Install container-selinux on CentOS and RHEL
+  ansible.builtin.yum:
+    name: container-selinux
+    state: present
+  become: yes
+
+- name: Install CRI-O and dependencies
+  ansible.builtin.yum:
+    name:
+      - cri-o
+        #      - cri-o-runc
+    state: present
+  become: yes
+  notify:
+    - Enable CRI-O service
+    - Start CRI-O service
+
+# Fedora-specific task can be included if Fedora has unique package handling requirements
+- name: Install CRI-O on Fedora (if applicable)
+  ansible.builtin.dnf:
+    name:
+      - cri-o
+        #      - cri-o-runc
+    state: present
+  become: yes
+  notify:
+    - Enable CRI-O service
+    - Start CRI-O service
+  when: ansible_facts['distribution'] == "Fedora"
+
+

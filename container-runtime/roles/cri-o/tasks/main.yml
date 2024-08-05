@@ -1,0 +1,12 @@
+---
+# tasks file for cri-o
+# Include tasks for Debian-based distributions
+- include_tasks: debian.yml
+  when: ansible_facts['os_family'] == "Debian"
+
+# Include tasks for RPM-based distributions
+- include_tasks: rpm.yml
+  when: ansible_facts['os_family'] in ["RedHat", "Fedora", "CentOS"]
+
+# Additional tasks can be added here if needed for other cases or custom logic
+

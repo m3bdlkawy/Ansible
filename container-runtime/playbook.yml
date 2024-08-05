@@ -1,0 +1,27 @@
+---
+- name: Choose and Install Container Runtime
+  hosts: all
+  become: yes
+  vars_files:
+    - roles/containerd/vars/main.yml
+    - roles/cri-o/vars/main.yml
+  vars_prompt:
+    - name: container_runtime
+      prompt: "Which container runtime do you want to install? (containerd/cri-o)"
+      private: no
+      default: containerd
+
+  tasks:
+    - name: Ensure valid container_runtime value
+      assert:
+        that:
+          - container_runtime in ['containerd', 'cri-o']
+        fail_msg: "Invalid container runtime choice. Please choose either 'containerd' or 'cri-o'."
+
+  roles:
+    - role: containerd
+      when: container_runtime == "containerd"
+
+    - role: cri-o
+      when: container_runtime == "cri-o"
+

@@ -1,0 +1,6 @@
+---
+# Version variables for containerd and related components
+runc_version: "1.1.13"
+containerd_version: "1.6.2"
+CNI_version: "1.5.1"
+

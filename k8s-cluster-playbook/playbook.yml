@@ -1,6 +1,8 @@
 ---
 - hosts: all
   become: yes
+  vars_files:
+    - vars/main.yaml
   roles:
     - detect_and_prepare_environment
 

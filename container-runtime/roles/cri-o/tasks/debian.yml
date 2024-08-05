@@ -1,0 +1,39 @@
+- name: Ensure /etc/apt/keyrings directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+    owner: osboxes
+    group: osboxes
+
+- name: Remove old CRI-O GPG key file if it exists
+  ansible.builtin.file:
+    path: "/etc/apt/keyrings/cri-o-apt-keyring.gpg"
+    state: absent
+
+- name: Download CRI-O GPG key from URL
+  ansible.builtin.get_url:
+    url: "https://pkgs.k8s.io/addons:/cri-o:/stable:/{{ CRIO_VERSION }}/deb/Release.key"
+    dest: "/etc/apt/keyrings/cri-o-apt-keyring.gpg"
+    mode: '0644'
+
+- name: Add CRI-O repository
+  ansible.builtin.lineinfile:
+    path: /etc/apt/sources.list.d/cri-o.list
+    line: "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/stable:/{{ CRIO_VERSION }}/deb/ /"
+    create: yes
+
+- name: Update apt cache with apt-get
+  ansible.builtin.command:
+    cmd: sudo apt-get update
+
+- name: Install CRI-O and dependencies
+  ansible.builtin.apt:
+    name:
+      - cri-o
+      - software-properties-common
+    state: present
+  notify:
+    - Enable CRI-O service on debian
+    - Start CRI-O service on debian
+

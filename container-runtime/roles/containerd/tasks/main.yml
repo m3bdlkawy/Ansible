@@ -1,0 +1,45 @@
+# Remove old package first 
+- name: remove old package 
+  include_tasks: removing_old_package.yml
+
+# Install containerd as per official documentation
+- name: Unarchive containerd binary
+  ansible.builtin.unarchive:
+    src: https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}/containerd-{{ containerd_version }}-linux-amd64.tar.gz
+    dest: /usr/local/
+    remote_src: yes
+  become: yes
+
+# Configure containerd service file
+- name: Configure containerd to act as service files
+  ansible.builtin.template:
+    src: containerd.service
+    dest: /etc/systemd/system/containerd.service
+  become: yes
+  notify:
+    - reload systemd
+# Install runc
+- name: Download runc binary
+  ansible.builtin.get_url:
+    url: https://github.com/opencontainers/runc/releases/download/v{{ runc_version }}/runc.amd64
+    dest: /usr/local/sbin/runc
+    mode: '0755'
+  become: yes
+
+# Create /opt/cni/bin directory
+- name: Create /opt/cni/bin directory
+  ansible.builtin.file:
+    path: /opt/cni/bin
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+  become: yes
+
+# Install CNI plugins
+- name: Unarchive CNI plugins
+  ansible.builtin.unarchive:
+    src: https://github.com/containernetworking/plugins/releases/download/v{{ CNI_version }}/cni-plugins-linux-amd64-v{{ CNI_version }}.tgz
+    dest: /opt/cni/bin
+    remote_src: yes
+  become: yes

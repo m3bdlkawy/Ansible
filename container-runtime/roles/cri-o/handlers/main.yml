@@ -1,0 +1,29 @@
+---
+# handlers file for cri-o
+#- name: Update apt cache
+#  ansible.builtin.apt:
+#   update_cache: yes
+      #  when: ansible_facts['os_family'] == "Debian"
+
+- name: Enable CRI-O service
+  ansible.builtin.systemd:
+    name: crio
+    enabled: yes
+    state: started
+
+- name: Start CRI-O service
+  ansible.builtin.systemd:
+    name: crio
+    state: started
+- name: Enable CRI-O service on debian
+  ansible.builtin.systemd:
+    name: crio
+    enabled: yes
+    state: started
+
+- name: Start CRI-O service on debian
+  ansible.builtin.systemd:
+    name: crio
+    state: started
+
+

@@ -1,0 +1,4 @@
+---
+# Variables for CRI-O role
+CRIO_VERSION: "v1.30"
+

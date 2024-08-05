@@ -1,0 +1,206 @@
+- name: Gather OS specific information
+  setup:
+
+- name: Install necessary packages based on distribution
+  block:
+    - name: Install prerequisites on Ubuntu
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Install prerequisites on CentOS
+      yum:
+        name:
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2
+        state: present
+      when: ansible_distribution == "CentOS"
+
+    - name: Install prerequisites on Debian
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+      when: ansible_distribution == "Debian"
+
+    - name: Install prerequisites on Fedora
+      dnf:
+        name:
+          - dnf-plugins-core
+        state: present
+      when: ansible_distribution == "Fedora"
+
+- name: Include tasks based on OS family
+  block:
+    - name: Include tasks for Debian-based systems
+      include_tasks: roles/detect_and_prepare_environment/tasks/debian.yaml
+      when: ansible_facts['os_family'] == 'Debian'
+
+    - name: Include tasks for RedHat-based systems
+      include_tasks: roles/detect_and_prepare_environment/tasks/redhat.yaml
+      when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Install containerd
+  block:
+    - name: Install containerd on Ubuntu
+      apt:
+        name: containerd.io
+        state: present
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Install containerd on CentOS
+      yum:
+        name: containerd.io
+        state: present
+      when: ansible_distribution == "CentOS"
+
+    - name: Install containerd on Debian
+      apt:
+        name: containerd.io
+        state: present
+      when: ansible_distribution == "Debian"
+
+    - name: Install containerd on Fedora
+      dnf:
+        name: containerd.io
+        state: present
+      when: ansible_distribution == "Fedora"
+
+- name: Configure and restart containerd
+  block:
+    - name: Configure containerd
+      command: containerd config default | tee /etc/containerd/config.toml
+
+    - name: Restart containerd
+      service:
+        name: containerd
+        state: restarted
+        enabled: yes
+
+- name: Setup Kubernetes Repositories
+  block:
+    - name: Add Kubernetes GPG key on Ubuntu
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        keyring: /usr/share/keyrings/kubernetes-archive-keyring.gpg
+        state: present
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Add Kubernetes repository on Ubuntu
+      apt_repository:
+        repo: >
+          deb [arch=amd64 signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] 
+          https://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Add Kubernetes GPG key on Debian
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        keyring: /usr/share/keyrings/kubernetes-archive-keyring.gpg
+        state: present
+      when: ansible_distribution == "Debian"
+
+    - name: Add Kubernetes repository on Debian
+      apt_repository:
+        repo: >
+          deb [arch=amd64 signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] 
+          https://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+      when: ansible_distribution == "Debian"
+
+    - name: Add Kubernetes repository on CentOS
+      yum_repository:
+        name: kubernetes
+        description: Kubernetes Repository
+        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+        gpgcheck: yes
+        gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg, https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+        enabled: yes
+      when: ansible_distribution == "CentOS"
+
+    - name: Add Kubernetes repository on Fedora
+      command:
+        cmd: dnf config-manager --add-repo=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+      when: ansible_distribution == "Fedora"
+
+    - name: Update apt cache on Ubuntu and Debian
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_distribution in ["Ubuntu", "Debian"]
+
+    - name: Clean dnf cache on CentOS and Fedora
+      command:
+        cmd: dnf clean all
+      when: ansible_distribution in ["CentOS", "Fedora"]
+
+- name: Install Kubernetes dependencies
+  block:
+    - name: Install Kubernetes on Ubuntu
+      apt:
+        name:
+          - kubelet={{ kubernetes_version }}
+          - kubeadm={{ kubernetes_version }}
+          - kubectl={{ kubernetes_version }}
+        state: present
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Install Kubernetes on CentOS
+      yum:
+        name:
+          - kubelet-{{ kubernetes_version }}
+          - kubeadm-{{ kubernetes_version }}
+          - kubectl-{{ kubernetes_version }}
+        state: present
+      when: ansible_distribution == "CentOS"
+
+    - name: Install Kubernetes on Debian
+      apt:
+        name:
+          - kubelet={{ kubernetes_version }}
+          - kubeadm={{ kubernetes_version }}
+          - kubectl={{ kubernetes_version }}
+        state: present
+      when: ansible_distribution == "Debian"
+
+    - name: Install Kubernetes on Fedora
+      dnf:
+        name:
+          - kubelet-{{ kubernetes_version }}
+          - kubeadm-{{ kubernetes_version }}
+          - kubectl-{{ kubernetes_version }}
+        state: present
+      when: ansible_distribution == "Fedora"
+
+- name: Disable swap
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+
+- name: Update sysctl settings for Kubernetes
+  template:
+    src: roles/detect_and_prepare_environment/templates/sysctl.conf.j2
+    dest: /etc/sysctl.d/k8s.conf
+  notify:
+    - reload sysctl
+
+- name: Enable and start kubelet
+  service:
+    name: kubelet
+    state: started
+    enabled: yes
+
+- name: Reload sysctl settings
+  sysctl:
+    reload: yes
+

@@ -1,7 +1,7 @@
 # Global Variables
 
 containerd_version: "1.8.12"  
-kubernetes_version: "1.29.0-00"
+kubernetes_version: "1.25.3"
 pod_network_cidr: "192.168.0.0/16"
 
 # Define master and worker nodes
@@ -11,7 +11,7 @@ master_nodes:
 
 worker_nodes:
   - "192.168.1.14"
-  - "192.168.1.15"
+  - "192.168.1.10"
 
 # Tokens and CA certificates
 kubeadm_token: "abcdef.0123456789abcdef"

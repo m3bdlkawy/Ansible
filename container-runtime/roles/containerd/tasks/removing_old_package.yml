@@ -1,0 +1,59 @@
+---
+# Removing old package
+- name: Remove conflicting container runtime packages (Debian)
+  apt:
+    name: "{{ item }}"
+    state: absent
+    purge: yes
+  loop:
+    - docker.io
+    - docker-doc
+    - docker-compose
+    - docker-compose-v2
+    - podman-docker
+    - containerd
+    - runc
+  when: ansible_facts['os_family'] == "Debian"
+  ignore_errors: yes
+
+- name: Remove conflicting container runtime packages (Fedora)
+  dnf:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - docker
+    - docker-client
+    - docker-client-latest
+    - docker-common
+    - docker-latest
+    - docker-latest-logrotate
+    - docker-logrotate
+    - docker-selinux
+    - docker-engine-selinux
+    - docker-engine
+  when: ansible_facts['distribution'] == "Fedora"
+  ignore_errors: yes
+
+- name: Remove conflicting container runtime packages (CentOS)
+  yum:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - docker
+    - docker-client
+    - docker-client-latest
+    - docker-common
+    - docker-latest
+    - docker-latest-logrotate
+    - docker-logrotate
+    - docker-engine
+  when: ansible_facts['distribution'] == "CentOS"
+  ignore_errors: yes
+
+- name: Remove containerd packages (RedHat)
+  yum:
+    name: containerd
+    state: absent
+  when: ansible_facts['os_family'] == "RedHat"
+  ignore_errors: yes
+

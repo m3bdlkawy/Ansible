@@ -1,48 +1,38 @@
 ---
-- name: Add Kubernetes GPG key on Ubuntu
-  apt_key:
-    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-    state: present
-  when: ansible_distribution == "Ubuntu"
+- name: Install containerd
+  block:
+    - name: Install containerd on Ubuntu
+      apt:
+        name: containerd.io
+        state: present
+      when: ansible_distribution == "Ubuntu"
 
-- name: Add Kubernetes repository on Ubuntu
-  apt_repository:
-    repo: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
-    state: present
-  when: ansible_distribution == "Ubuntu"
+    - name: Install containerd on CentOS
+      yum:
+        name: containerd.io
+        state: present
+      when: ansible_distribution == "CentOS"
 
-- name: Install Kubernetes dependencies on Ubuntu
-  apt:
-    name: 
-      - kubelet={{ kubernetes_version }}
-      - kubeadm={{ kubernetes_version }}
-      - kubectl={{ kubernetes_version }}
-    state: present
-  when: ansible_distribution == "Ubuntu"
+    - name: Install containerd on Debian
+      apt:
+        name: containerd.io
+        state: present
+      when: ansible_distribution == "Debian"
 
-- name: Add Kubernetes repository on CentOS
-  yum_repository:
-    name: kubernetes
-    description: Kubernetes Repository
-    baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
-    gpgcheck: yes
-    gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg
-            https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-    enabled: yes
-  when: ansible_distribution == "CentOS"
+    - name: Install containerd on Fedora
+      dnf:
+        name: containerd.io
+        state: present
+      when: ansible_distribution == "Fedora"
 
-- name: Install Kubernetes dependencies on CentOS
-  yum:
-    name:
-      - kubelet-{{ kubernetes_version }}
-      - kubeadm-{{ kubernetes_version }}
-      - kubectl-{{ kubernetes_version }}
-    state: present
-  when: ansible_distribution == "CentOS"
+- name: Configure and restart containerd
+  block:
+    - name: Configure containerd
+      command: containerd config default | tee /etc/containerd/config.toml
 
-- name: Enable and start kubelet
-  service:
-    name: kubelet
-    state: started
-    enabled: yes
+    - name: Restart containerd
+      service:
+        name: containerd
+        state: restarted
+        enabled: yes
 

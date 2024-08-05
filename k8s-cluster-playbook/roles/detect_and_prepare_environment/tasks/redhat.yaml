@@ -1,0 +1,61 @@
+---
+- name: Add Docker repository for containerd
+  ansible.builtin.command:
+    cmd: dnf config-manager --add-repo=https://download.docker.com/linux/centos/7/x86_64/stable/
+  become: yes
+  args:
+    creates: /etc/yum.repos.d/docker-ce.repo
+  when: ansible_distribution == "CentOS"
+
+- name: Import Docker GPG key
+  ansible.builtin.command:
+    cmd: rpm --import https://download.docker.com/linux/centos/gpg
+  become: yes
+  when: ansible_distribution == "CentOS"
+
+- name: Install containerd
+  ansible.builtin.dnf:
+    name: containerd.io
+    state: latest
+  ignore_errors: yes
+  become: yes
+  when: ansible_distribution == "CentOS"
+
+- name: Add Kubernetes repository on CentOS
+  yum_repository:
+    name: kubernetes
+    description: Kubernetes Repository
+    baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+    gpgcheck: yes
+    gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg, https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    enabled: yes
+  when: ansible_distribution == "CentOS"
+
+- name: Add Kubernetes repository on Fedora
+  command:
+    cmd: dnf config-manager --add-repo=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+  when: ansible_distribution == "Fedora"
+
+- name: Clean dnf cache on CentOS and Fedora
+  command:
+    cmd: dnf clean all
+  when: ansible_distribution in ["CentOS", "Fedora"]
+
+- name: Install Kubernetes on CentOS
+  yum:
+    name:
+      - kubelet-{{ kubernetes_version }}
+      - kubeadm-{{ kubernetes_version }}
+      - kubectl-{{ kubernetes_version }}
+    state: present
+  when: ansible_distribution == "CentOS"
+
+- name: Install Kubernetes on Fedora
+  dnf:
+    name:
+      - kubelet-{{ kubernetes_version }}
+      - kubeadm-{{ kubernetes_version }}
+      - kubectl-{{ kubernetes_version }}
+    state: present
+  when: ansible_distribution == "Fedora"
+
