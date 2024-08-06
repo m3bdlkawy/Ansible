@@ -1,0 +1,28 @@
+---
+    - name: Remove Docker and related packages
+      dnf:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - docker
+        - docker-client
+        - docker-client-latest
+        - docker-common
+        - docker-latest
+        - docker-latest-logrotate
+        - docker-logrotate
+        - docker-selinux
+        - docker-engine-selinux
+        - docker-engine
+      become: yes
+    - name: Install dnf-plugins-core
+      dnf:
+        name: dnf-plugins-core
+        state: present
+
+    - name: Add Docker repository
+      dnf_config:
+        name: docker-ce
+        repo_url: "{{ url_Fedora }}"
+        state: present
+

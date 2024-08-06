@@ -1,0 +1,34 @@
+---
+# handlers file for containerd-package-manager
+
+- name: Start and enable containerd on Centos
+  systemd:
+   name: containerd
+   state: started
+   enabled: yes
+
+- name: Enable and start containerd on Debian
+  service:
+    name: containerd
+    state: started
+    enabled: yes
+- name: Start and enable containerd on ubuntu 
+  service:
+    name: containerd
+    state: started
+    enabled: yes
+- name: Start and enable containerd on Fedora
+  service:
+      name: containerd
+      state: started
+      enabled: yes
+- name: Restart and enable containerd on RedHat
+  service:
+    name: containerd
+    state: started
+    enabled: yes
+
+- name: Restart containerd
+  service:
+    name: containerd
+    state: restarted

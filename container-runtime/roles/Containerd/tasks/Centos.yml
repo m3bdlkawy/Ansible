@@ -1,0 +1,33 @@
+---
+- name: Remove Docker packages
+  yum:
+     name:
+          - docker
+          - docker-client
+          - docker-client-latest
+          - docker-common
+          - docker-latest
+          - docker-latest-logrotate
+          - docker-logrotate
+          - docker-engine
+  state: absent
+  become: yes
+
+- name: Ensure yum-utils is installed
+  yum:
+    name: yum-utils
+    state: present
+  become: yes
+
+- name: Add Docker CE repository
+  yum_repository:
+    name: docker-ce
+    description: Docker CE Repository
+    baseurl: {{ base_url_Centos }}
+    enabled: yes
+    gpgcheck: yes
+    gpgkey: {{ gpgkey_Centos }}
+  become: yes
+  
+  
+

@@ -1,0 +1,31 @@
+---
+# tasks file for containerd-package-manager
+- name: Include all variables
+  include_vars: vars/main.yml
+- name: Install containerd on CentOS
+  include_tasks: tasks/Centos.yml
+  when: ansible_distribution == 'CentOS'
+
+- name: Install containerd on Debian
+  include_tasks: tasks/Debian.yml
+  when: ansible_distribution == 'Debian'
+
+- name: Install containerd on Fedora
+  include_tasks: tasks/Fedora.yml
+  when: ansible_distribution == 'Fedora'
+
+- name: Install containerd on RHEL
+  include_tasks: tasks/Rhel.yml
+  when: ansible_distribution == 'RedHat'
+
+- name: Install containerd on Ubuntu
+  include_tasks: tasks/Ubuntu.yml
+  when: ansible_distribution == 'Ubuntu'
+
+
+- name: Configure containerd
+  include_tasks: configur-containerd.yml
+  when: ansible_distribution in ['CentOS', 'Debian', 'Fedora', 'RedHat', 'Ubuntu']
+
+
+  

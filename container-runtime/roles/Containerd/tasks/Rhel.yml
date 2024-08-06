@@ -1,0 +1,25 @@
+- name: Install dependencies (RedHat)
+  ansible.builtin.yum:
+    name:
+      - curl
+      - gnupg
+      - yum-utils
+      - ca-certificates
+      - device-mapper-persistent-data
+      - lvm2
+    state: present
+    update_cache: yes
+- name: Add Docker GPG key (RedHat)
+  ansible.builtin.rpm_key:
+    key: "{{ docker_gpg_key_RedHat_url }}"
+    state: present
+
+- name: Add Docker CE repository (RedHat)
+  ansible.builtin.command: sudo yum-config-manager --add-repo "{{ docker_repo_redhat }}"
+ 
+
+- name: Install containerd 
+  ansible.builtin.package:
+    name: containerd.io
+    state: present
+  notify: Restart and enable containerd on RedHat 
